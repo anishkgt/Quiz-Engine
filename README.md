@@ -12,4 +12,4 @@ The interface is simple,
   6. Choose domains.
   7. Start Quiz
 
-Enjoy !
+Enjoy ! Happy learning.
