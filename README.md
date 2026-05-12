@@ -6,9 +6,10 @@ This quiz engine can help you prepare of any exam. Add questions into the engine
 The interface is simple,
   1. Open the HTML file
   2. Add/change questions for the test/practice
-  3. Choose number of Questions
-  4. Chooe time limit (Test mode only). Practice in indefinite.
-  5. Choose domains.
-  6. Start Quiz
+  3. Add/change Domains
+  4. Choose number of Questions
+  5. Chooe time limit (Test mode only). Practice in indefinite.
+  6. Choose domains.
+  7. Start Quiz
 
 Enjoy !
