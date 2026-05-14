@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<!Developed by Anish Thomas>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz Engine - AGT </title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ─────────────────────────────────────── */
+:root {
+  --bg:#0a0e14; --s1:#111720; --s2:#18212e; --s3:#1e2a38;
+  --bd:#1e2d3d; --bd2:#2a3f55; --bd3:#3a5570;
+  --blue:#4d9de0; --bdim:#1e3a54; --bt:#a8c4d8;
+  --amber:#e8a44a; --adim:#3d2a0a; --at:#f0c070;
+  --green:#4caf7d; --gdim:#0d2e1a; --gt:#80d4a8;
+  --red:#e05555; --rdim:#2e0d0d; --rt:#f09090;
+  --text:#a8c4d8; --td:#a8c4d8; --tm:#a8c4d8;
+  --mono:'IBM Plex Mono',monospace;
+  --sans:'IBM Plex Sans',sans-serif;
+  --r:6px; --r2:10px; --r3:14px;
+  --sh:0 4px 24px rgba(0,0,0,.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.6;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(77,157,224,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(77,157,224,.025) 1px,transparent 1px);background-size:44px 44px;pointer-events:none;z-index:0;}
+
+/* ── LAYOUT ─────────────────────────────────────── */
+.wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:0 20px 60px;}
+.screen{display:none;animation:fadeUp .28s ease;}
+.screen.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+@keyframes blink{0%,100%{color:var(--red);}50%{color:var(--rt);}}
+
+/* ── TOP NAV ────────────────────────────────────── */
+.topnav{position:sticky;top:0;z-index:100;background:rgba(10,14,20,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--bd);padding:0 20px;}
+.topnav-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:54px;gap:12px;}
+.brand{font-family:var(--mono);font-size:13px;font-weight:600;color:#e8f0f8;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+.brand-dot{width:7px;height:7px;background:var(--blue);border-radius:50%;animation:pulse 2s infinite;}
+.brand span{color:var(--amber);}
+.nav-pills{display:flex;gap:4px;}
+.nav-pill{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.04em;padding:6px 14px;border-radius:var(--r);border:1px solid var(--bd2);background:transparent;color:var(--td);cursor:pointer;transition:all .15s;}
+.nav-pill:hover{border-color:var(--blue);color:var(--bt);}
+.nav-pill.active{border-color:var(--blue);background:var(--bdim);color:var(--bt);}
+
+/* ── CARDS & SURFACES ───────────────────────────── */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r2);padding:24px;}
+.card-sm{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:16px;}
+.section-label{font-family:var(--mono);font-size:10px;color:var(--tm);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.section-label::after{content:'';flex:1;height:1px;background:var(--bd);}
+h2{font-family:var(--mono);font-size:18px;font-weight:600;color:#e8f0f8;margin-bottom:6px;}
+h3{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--bt);margin-bottom:12px;}
+
+/* ── BUTTONS ────────────────────────────────────── */
+.btn{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.06em;padding:10px 22px;border-radius:var(--r);border:1px solid;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:7px;}
+.btn:disabled{opacity:.35;cursor:default;}
+.btn-blue{background:var(--bdim);border-color:var(--blue);color:var(--bt);}
+.btn-blue:hover:not(:disabled){background:#1e3f60;}
+.btn-amber{background:var(--adim);border-color:var(--amber);color:var(--at);}
+.btn-amber:hover:not(:disabled){background:#4d350d;}
+.btn-green{background:var(--gdim);border-color:var(--green);color:var(--gt);}
+.btn-green:hover:not(:disabled){background:#124023;}
+.btn-ghost{background:transparent;border-color:var(--bd2);color:var(--td);}
+.btn-ghost:hover:not(:disabled){border-color:var(--blue);color:var(--bt);}
+.btn-red{background:var(--rdim);border-color:var(--red);color:var(--rt);}
+.btn-red:hover:not(:disabled){background:#3d1010;}
+.btn-lg{font-size:13px;padding:13px 32px;}
+.btn-sm{font-size:10px;padding:6px 12px;letter-spacing:.04em;}
+
+/* ── FORM ELEMENTS ──────────────────────────────── */
+.form-group{margin-bottom:16px;}
+.form-label{font-family:var(--mono);font-size:11px;color:var(--td);letter-spacing:.04em;margin-bottom:6px;display:block;}
+.form-input,.form-select,.form-textarea{width:100%;background:var(--s2);border:1px solid var(--bd2);border-radius:var(--r);color:var(--text);font-family:var(--sans);font-size:14px;padding:10px 13px;transition:border-color .15s;outline:none;}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--blue);}
+.form-input:disabled,.form-select:disabled,.form-textarea:disabled{opacity:.4;cursor:not-allowed;}
+.form-select option{background:var(--s2);}
+.form-textarea{resize:vertical;min-height:70px;line-height:1.5;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:640px){.form-row{grid-template-columns:1fr;}}
+
+/* ── HOME SCREEN ─────────────────────────────────── */
+.home-header{padding:36px 0 28px;border-bottom:1px solid var(--bd);margin-bottom:28px;}
+.home-header .tag{font-family:var(--mono);font-size:11px;color:var(--blue);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+.home-header .tag::before{content:'';width:6px;height:6px;background:var(--blue);border-radius:50%;animation:pulse 2s infinite;}
+.home-header h1{font-family:var(--mono);font-size:24px;font-weight:600;color:#e8f0f8;margin-bottom:8px;line-height:1.3;}
+.home-header h1 em{color:var(--amber);font-style:normal;}
+.home-header p{color:var(--td);font-size:14px;}
+.stats-bar{display:flex;gap:24px;margin-top:20px;flex-wrap:wrap;}
+.stat-item{font-family:var(--mono);font-size:11px;color:var(--tm);display:flex;flex-direction:column;gap:3px;}
+.stat-item strong{color:var(--td);font-size:14px;}
+
+/* MODE CARDS */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px;}
+@media(max-width:500px){.mode-grid{grid-template-columns:1fr;}}
+.mode-card{border:2px solid var(--bd);border-radius:var(--r2);padding:22px 20px;cursor:pointer;transition:all .2s;background:var(--s1);text-align:left;}
+.mode-card:hover{border-color:var(--bd3);background:var(--s2);}
+.mode-card.selected-test{border-color:var(--blue);background:var(--bdim);}
+.mode-card.selected-practice{border-color:var(--amber);background:var(--adim);}
+.mode-icon{font-size:24px;margin-bottom:10px;}
+.mode-name{font-family:var(--mono);font-size:14px;font-weight:600;color:#e8f0f8;margin-bottom:4px;}
+.mode-desc{font-size:12px;color:var(--td);line-height:1.5;}
+.mode-tag{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:99px;display:inline-block;margin-top:8px;}
+.mode-card.selected-test .mode-tag{background:var(--bdim);border:1px solid var(--blue);color:var(--bt);}
+.mode-card.selected-practice .mode-tag{background:var(--adim);border:1px solid var(--amber);color:var(--at);}
+.mode-card:not(.selected-test):not(.selected-practice) .mode-tag{background:var(--s3);border:1px solid var(--bd2);color:var(--td);}
+
+/* DOMAIN CHIPS */
+.domain-row{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px;}
+.d-chip{font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:5px 11px;border-radius:99px;border:1px solid var(--bd2);background:transparent;color:var(--td);cursor:pointer;transition:all .15s;}
+.d-chip:hover{border-color:var(--blue);color:var(--bt);}
+.d-chip.on{border-color:var(--blue);background:var(--bdim);color:var(--bt);}
+
+/* SETTINGS PANEL */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px;}
+@media(max-width:600px){.settings-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:400px){.settings-grid{grid-template-columns:1fr;}}
+
+/* ── MANAGE SCREEN ───────────────────────────────── */
+.manage-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;padding-top:28px;flex-wrap:wrap;gap:12px;}
+.q-list-item{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;transition:border-color .15s;}
+.q-list-item:hover{border-color:var(--bd2);}
+.q-list-num{font-family:var(--mono);font-size:11px;color:var(--tm);min-width:28px;padding-top:2px;}
+.q-list-body{flex:1;min-width:0;}
+.q-list-domain{font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.04em;margin-bottom:4px;}
+.q-list-text{font-size:13px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.q-list-actions{display:flex;gap:6px;flex-shrink:0;}
+.add-form-wrap{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r2);padding:24px;margin-bottom:24px;}
+.opt-block{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:14px;margin-bottom:10px;}
+.opt-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.opt-letter{font-family:var(--mono);font-size:12px;font-weight:600;width:24px;height:24px;border-radius:4px;background:var(--bd2);color:var(--td);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.radio-correct{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--td);cursor:pointer;}
+.radio-correct input{accent-color:var(--green);}
+.opt-block.is-correct-opt{border-color:rgba(76,175,125,.4);background:rgba(13,46,26,.5);}
+.opt-block.is-correct-opt .opt-letter{background:var(--green);color:#fff;}
+.search-bar{display:flex;gap:10px;margin-bottom:14px;}
+.search-bar input{flex:1;}
+.no-q{text-align:center;padding:40px 20px;color:var(--tm);font-family:var(--mono);font-size:13px;}
+
+/* ── MANAGE TABS ─────────────────────────────────── */
+.manage-tabs{display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:24px;}
+.manage-tab{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.05em;padding:11px 22px;border:none;background:transparent;color:var(--td);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.manage-tab:hover{color:var(--bt);}
+.manage-tab.active{color:var(--bt);border-bottom-color:var(--blue);}
+.manage-tab-panel{display:none;}
+.manage-tab-panel.active{display:block;}
+
+/* ── DOMAIN LIST ─────────────────────────────────── */
+.dom-item{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:13px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:border-color .15s;}
+.dom-item:hover{border-color:var(--bd2);}
+.dom-item-num{font-family:var(--mono);font-size:11px;color:var(--tm);min-width:26px;text-align:right;}
+.dom-item-name{flex:1;font-size:14px;color:var(--text);}
+.dom-item-count{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:99px;white-space:nowrap;}
+.dom-item-count.has-q{background:var(--bdim);border:1px solid var(--blue);color:var(--bt);}
+.dom-item-count.no-q-badge{background:var(--s3);border:1px solid var(--bd2);color:var(--tm);}
+.dom-item-actions{display:flex;gap:6px;flex-shrink:0;}
+.dom-add-row{display:flex;gap:10px;margin-bottom:20px;align-items:flex-end;}
+.dom-add-row input{flex:1;}
+.dom-edit-wrap{flex:1;display:flex;gap:8px;align-items:center;}
+.dom-edit-wrap input{flex:1;}
+.dom-order-btn{font-family:var(--mono);font-size:14px;padding:6px 10px;border-radius:var(--r);border:1px solid var(--bd2);background:transparent;color:var(--td);cursor:pointer;transition:all .15s;line-height:1;}
+.dom-order-btn:hover{border-color:var(--blue);color:var(--bt);}
+
+/* ── QUIZ SCREEN ─────────────────────────────────── */
+.quiz-header{position:sticky;top:54px;z-index:50;background:rgba(10,14,20,.95);backdrop-filter:blur(10px);border-bottom:1px solid var(--bd);padding:12px 20px;margin:0 -20px 24px;}
+.quiz-header-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.quiz-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.quiz-mode-tag{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.06em;padding:4px 10px;border-radius:99px;}
+.quiz-mode-tag.test{background:var(--bdim);border:1px solid var(--blue);color:var(--bt);}
+.quiz-mode-tag.practice{background:var(--adim);border:1px solid var(--amber);color:var(--at);}
+.quiz-counter{font-family:var(--mono);font-size:12px;color:var(--td);}
+.timer-display{font-family:var(--mono);font-size:18px;font-weight:600;color:var(--bt);min-width:70px;text-align:center;}
+.timer-display.warn{color:var(--amber);}
+.timer-display.crit{animation:blink 1s infinite;}
+.quiz-progress{height:2px;background:var(--bd);border-radius:99px;margin-top:10px;overflow:hidden;}
+.quiz-progress-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--bt));border-radius:99px;transition:width .4s ease;}
+
+.q-card{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r2);padding:28px;margin-bottom:18px;}
+.q-domain-badge{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--amber);background:var(--adim);border:1px solid rgba(232,164,74,.2);padding:4px 10px;border-radius:99px;display:inline-block;margin-bottom:14px;}
+.q-text{font-size:16px;color:#dae8f5;line-height:1.65;}
+
+.opts-list{display:flex;flex-direction:column;gap:9px;margin-top:22px;}
+.opt-btn{background:var(--s2);border:1px solid var(--bd);border-radius:var(--r);padding:13px 16px;cursor:pointer;display:flex;align-items:flex-start;gap:12px;text-align:left;width:100%;color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.55;transition:border-color .15s,background .15s,transform .1s;}
+.opt-btn:hover:not(:disabled){border-color:var(--blue);background:#111c29;transform:translateX(2px);}
+.opt-btn:disabled{cursor:default;transform:none;}
+.opt-key-badge{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--tm);background:var(--bd);border-radius:4px;min-width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .15s;}
+.opt-btn.correct-chosen{border-color:var(--green);background:var(--gdim);}
+.opt-btn.correct-chosen .opt-key-badge{background:var(--green);color:#fff;}
+.opt-btn.wrong-chosen{border-color:var(--red);background:var(--rdim);}
+.opt-btn.wrong-chosen .opt-key-badge{background:var(--red);color:#fff;}
+.opt-btn.correct-show{border-color:rgba(76,175,125,.45);background:rgba(13,46,26,.5);}
+.opt-btn.correct-show .opt-key-badge{background:rgba(76,175,125,.4);color:var(--gt);}
+
+/* FEEDBACK PANELS */
+.feedback-wrap{margin-top:16px;display:flex;flex-direction:column;gap:10px;}
+.fb-panel{border-radius:var(--r);padding:15px 17px;font-size:14px;line-height:1.65;border-left:3px solid;}
+.fb-panel.fb-correct{background:var(--gdim);border-color:var(--green);}
+.fb-panel.fb-wrong{background:var(--rdim);border-color:var(--red);}
+.fb-panel.fb-info{background:var(--bdim);border-color:var(--blue);}
+.fb-head{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.05em;margin-bottom:6px;text-transform:uppercase;}
+.fb-panel.fb-correct .fb-head{color:var(--gt);}
+.fb-panel.fb-wrong .fb-head{color:var(--rt);}
+.fb-panel.fb-info .fb-head{color:var(--bt);}
+.fb-body{color:var(--text);}
+
+/* QUIZ NAV */
+.quiz-nav{display:flex;align-items:center;justify-content:space-between;margin-top:10px;gap:12px;flex-wrap:wrap;}
+.quiz-nav-left{display:flex;gap:8px;}
+.show-ans-toggle{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.04em;padding:8px 16px;border-radius:var(--r);border:1px solid var(--bd2);background:transparent;color:var(--td);cursor:pointer;transition:all .15s;}
+.show-ans-toggle.revealed{border-color:var(--amber);background:var(--adim);color:var(--at);}
+
+/* ── RESULTS SCREEN ──────────────────────────────── */
+.result-hero{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r2);padding:40px;text-align:center;margin-bottom:24px;}
+.result-pct{font-family:var(--mono);font-size:72px;font-weight:600;line-height:1;margin-bottom:8px;}
+.result-pct.pass{color:var(--green);}
+.result-pct.fail{color:var(--amber);}
+.result-verdict{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
+.result-verdict.pass{color:var(--green);}
+.result-verdict.fail{color:var(--amber);}
+.result-sub{color:var(--td);font-size:14px;max-width:420px;margin:0 auto 28px;}
+.result-stats{display:flex;justify-content:center;gap:32px;border-top:1px solid var(--bd);padding-top:24px;flex-wrap:wrap;}
+.result-stat-val{font-family:var(--mono);font-size:32px;font-weight:600;display:block;}
+.result-stat-val.ok{color:var(--green);}
+.result-stat-val.ng{color:var(--red);}
+.result-stat-val.neu{color:var(--bt);}
+.result-stat-lbl{font-size:11px;color:var(--tm);text-transform:uppercase;letter-spacing:.06em;}
+
+.domain-table{width:100%;border-collapse:collapse;}
+.domain-table th{font-family:var(--mono);font-size:10px;color:var(--tm);letter-spacing:.06em;text-transform:uppercase;padding:10px 14px;border-bottom:1px solid var(--bd);text-align:left;}
+.domain-table td{padding:12px 14px;border-bottom:1px solid var(--bd);font-size:13px;vertical-align:middle;}
+.domain-table tr:last-child td{border-bottom:none;}
+.domain-table tr:hover td{background:var(--s2);}
+.d-bar-wrap{width:120px;height:5px;background:var(--bd);border-radius:99px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px;}
+.d-bar-fill{height:100%;border-radius:99px;}
+.d-pct{font-family:var(--mono);font-size:12px;font-weight:600;vertical-align:middle;}
+.d-pct.pass{color:var(--green);}
+.d-pct.fail{color:var(--red);}
+.d-pct.warn{color:var(--amber);}
+
+/* REVIEW */
+.review-item{background:var(--s1);border:1px solid var(--bd);border-radius:var(--r2);padding:20px;margin-bottom:12px;}
+.review-item.r-correct{border-color:rgba(76,175,125,.3);}
+.review-item.r-wrong{border-color:rgba(224,85,85,.3);}
+.review-item.r-skip{border-color:var(--bd2);}
+.review-q-num{font-family:var(--mono);font-size:10px;color:var(--tm);margin-bottom:8px;}
+.review-q-text{font-size:14px;color:var(--text);margin-bottom:14px;line-height:1.6;}
+.review-opts{display:flex;flex-direction:column;gap:6px;}
+.review-opt{font-size:13px;padding:8px 12px;border-radius:var(--r);border:1px solid var(--bd);color:var(--td);}
+.review-opt.r-correct{border-color:var(--green);background:var(--gdim);color:var(--gt);}
+.review-opt.r-wrong{border-color:var(--red);background:var(--rdim);color:var(--rt);}
+.result-actions{display:flex;justify-content:center;gap:12px;margin-top:8px;flex-wrap:wrap;}
+
+/* MISC */
+.badge{font-family:var(--mono);font-size:10px;padding:3px 8px;border-radius:99px;}
+.badge-blue{background:var(--bdim);border:1px solid var(--blue);color:var(--bt);}
+.badge-green{background:var(--gdim);border:1px solid var(--green);color:var(--gt);}
+.badge-amber{background:var(--adim);border:1px solid var(--amber);color:var(--at);}
+.divider{height:1px;background:var(--bd);margin:24px 0;}
+.text-muted{color:var(--td);font-size:13px;}
+.text-mono{font-family:var(--mono);}
+.mt-4{margin-top:16px;}
+.mt-6{margin-top:24px;}
+.flex-between{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+.toast{position:fixed;bottom:24px;right:24px;z-index:999;background:var(--s1);border:1px solid var(--bd2);border-radius:var(--r);padding:12px 18px;font-family:var(--mono);font-size:12px;color:var(--text);box-shadow:var(--sh);animation:fadeUp .25s ease;display:none;}
+.toast.show{display:block;}
+.scrollable{max-height:420px;overflow-y:auto;padding-right:4px;}
+.scrollable::-webkit-scrollbar{width:4px;}
+.scrollable::-webkit-scrollbar-track{background:transparent;}
+.scrollable::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:99px;}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <div class="brand"><div class="brand-dot"></div>Quiz Engine</div>
+    <div class="nav-pills">
+      <button class="nav-pill active" onclick="showScreen('home')">⌂ Home</button>
+      <button class="nav-pill" onclick="showScreen('manage')">✎ Questions</button>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- ══════════════════════════════════════════════════════════
+     SCREEN: HOME
+══════════════════════════════════════════════════════════ -->
+<div id="screen-home" class="screen active">
+  <div class="home-header">
+    <!-- <div class="tag">Cybersecurity Fundamental Specialist</div> -->
+    <!-- <h1>ISA/IEC <em>62443</em> Quiz Engine</h1> -->
+    <p>Select mode, configure domains and session settings, then start your quiz.</p>
+    <div class="stats-bar">
+      <div class="stat-item"><span>QUESTION BANK</span><strong id="stat-bank">0</strong></div>
+      <div class="stat-item"><span>DOMAINS</span><strong id="stat-domains">12</strong></div>
+      <div class="stat-item"><span>PASS THRESHOLD</span><strong>70%</strong></div>
+    </div>
+  </div>
+
+  <!-- MODE SELECTION -->
+  <div class="section-label">Select Mode</div>
+  <div class="mode-grid">
+    <div class="mode-card selected-test" id="card-test" onclick="selectMode('test')">
+      <div class="mode-icon">🎯</div>
+      <div class="mode-name">Test Mode</div>
+      <div class="mode-desc">Timed examination simulation. Answers locked on selection. Green = correct, Red = wrong. Results shown at end.</div>
+      <span class="mode-tag">TIMED · NO HINTS</span>
+    </div>
+    <div class="mode-card" id="card-practice" onclick="selectMode('practice')">
+      <div class="mode-icon">📖</div>
+      <div class="mode-name">Practice Mode</div>
+      <div class="mode-desc">Untimed study session. Instant justification for correct and wrong answers. Toggle answer visibility.</div>
+      <span class="mode-tag">UNTIMED · JUSTIFICATION</span>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="section-label">Session Settings</div>
+  <div class="settings-grid">
+    <div class="card-sm">
+      <div class="form-label">Questions</div>
+      <input type="number" class="form-input" id="cfg-qty" value="25" min="5" max="999" style="margin-bottom:4px;">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--tm)" id="cfg-avail">of 0 available</div>
+    </div>
+    <div class="card-sm">
+      <div class="form-label">Time Limit (minutes)</div>
+      <input type="number" class="form-input" id="cfg-time" value="60" min="5" max="300">
+      <div style="font-family:var(--mono);font-size:10px;color:var(--tm);margin-top:4px" id="cfg-time-note">Active in Test mode only</div>
+    </div>
+    <div class="card-sm">
+      <div class="form-label">Shuffle Questions</div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:6px;">
+        <input type="checkbox" id="cfg-shuffle" checked style="accent-color:var(--blue);width:16px;height:16px;">
+        <span style="font-size:13px;color:var(--td)">Randomize order</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- DOMAIN FILTER -->
+  <div class="section-label mt-4">Filter by Domain</div>
+  <div class="card-sm" style="margin-bottom:20px;">
+    <div class="domain-row" id="domain-chips"></div>
+  </div>
+
+  <div style="text-align:center;margin-bottom:28px;">
+    <button class="btn btn-amber btn-lg" onclick="startQuiz()" id="start-btn">START QUIZ →</button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     SCREEN: MANAGE QUESTIONS
+══════════════════════════════════════════════════════════ -->
+<div id="screen-manage" class="screen">
+  <div class="manage-header">
+    <div>
+      <h2>Question Bank</h2>
+      <p class="text-muted">
+        <span id="manage-count" class="badge badge-blue">0 questions</span>
+        <span id="manage-dom-count" class="badge badge-amber" style="margin-left:6px">0 domains</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="manage-tabs">
+    <button class="manage-tab active" id="tab-questions" onclick="switchManageTab('questions')">📋 Questions</button>
+    <button class="manage-tab" id="tab-domains" onclick="switchManageTab('domains')">🗂 Domains</button>
+  </div>
+
+  <!-- ── TAB: QUESTIONS ── -->
+  <div class="manage-tab-panel active" id="panel-questions">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
+      <button class="btn btn-amber" onclick="toggleAddForm()">+ Add Question</button>
+    </div>
+
+    <!-- ADD / EDIT FORM -->
+    <div class="add-form-wrap" id="add-form-wrap" style="display:none">
+      <h3 id="form-title">New Question</h3>
+      <input type="hidden" id="edit-id">
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Domain *</label>
+          <select class="form-select" id="f-domain"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Correct Answer</label>
+          <select class="form-select" id="f-correct">
+            <option value="0">A</option>
+            <option value="1">B</option>
+            <option value="2">C</option>
+            <option value="3">D</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Question Text *</label>
+        <textarea class="form-textarea" id="f-question" placeholder="Enter the question..." style="min-height:80px"></textarea>
+      </div>
+
+      <div id="opt-blocks"></div>
+
+      <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;">
+        <button class="btn btn-green" onclick="saveQuestion()">💾 Save Question</button>
+        <button class="btn btn-ghost" onclick="clearForm()">✕ Clear</button>
+        <button class="btn btn-ghost" onclick="toggleAddForm()">Cancel</button>
+      </div>
+    </div>
+
+    <!-- SEARCH + LIST -->
+    <div class="search-bar">
+      <input type="text" class="form-input" id="q-search" placeholder="Search questions..." oninput="renderQList()">
+      <select class="form-select" id="q-filter-domain" style="max-width:220px;" onchange="renderQList()">
+        <option value="">All Domains</option>
+      </select>
+    </div>
+    <div id="q-list"></div>
+  </div>
+
+  <!-- ── TAB: DOMAINS ── -->
+  <div class="manage-tab-panel" id="panel-domains">
+    <!-- ADD NEW DOMAIN -->
+    <div class="add-form-wrap" style="margin-bottom:20px;">
+      <h3>Add New Domain</h3>
+      <div style="margin-top:12px;" class="dom-add-row">
+        <div style="flex:1;">
+          <label class="form-label">Domain Name *</label>
+          <input type="text" class="form-input" id="new-domain-input" placeholder="e.g. Network Security Monitoring" maxlength="120"
+            onkeydown="if(event.key==='Enter')addDomain()">
+        </div>
+        <button class="btn btn-green" onclick="addDomain()" style="flex-shrink:0">+ Add Domain</button>
+      </div>
+    </div>
+
+    <!-- DOMAIN LIST -->
+    <div class="section-label">Existing Domains</div>
+    <p class="text-muted" style="margin-bottom:14px;font-size:13px;">
+      Editing a domain name automatically updates all questions assigned to it.
+      Domains with questions cannot be deleted until questions are reassigned or removed.
+    </p>
+    <div id="domain-list"></div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     SCREEN: QUIZ
+══════════════════════════════════════════════════════════ -->
+<div id="screen-quiz" class="screen">
+  <div class="quiz-header">
+    <div class="quiz-header-inner">
+      <div class="quiz-meta">
+        <span class="quiz-mode-tag" id="q-mode-tag">TEST</span>
+        <span class="quiz-counter" id="q-counter">Q 1 / 25</span>
+        <span class="quiz-counter" id="q-domain-label" style="color:var(--amber)"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="timer-display" id="timer-display" style="display:none">00:00</div>
+        <button class="btn btn-ghost btn-sm" onclick="confirmExit()">✕ Exit</button>
+      </div>
+    </div>
+    <div style="padding:0 20px;max-width:960px;margin:6px auto 0;">
+      <div class="quiz-progress"><div class="quiz-progress-fill" id="q-progress-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- QUESTION CARD -->
+  <div class="q-card">
+    <div class="q-domain-badge" id="q-domain-badge"></div>
+    <div class="q-text" id="q-text"></div>
+    <div class="opts-list" id="q-opts"></div>
+    <div id="q-feedback" class="feedback-wrap" style="display:none"></div>
+  </div>
+
+  <!-- NAV -->
+  <div class="quiz-nav">
+    <div class="quiz-nav-left">
+      <button class="show-ans-toggle" id="show-ans-btn" onclick="toggleShowAnswer()" style="display:none">👁 Show Answer</button>
+    </div>
+    <button class="btn btn-blue btn-lg" id="next-btn" onclick="nextQuestion()">Next ›› </button>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     SCREEN: RESULTS
+══════════════════════════════════════════════════════════ -->
+<div id="screen-results" class="screen">
+  <!-- HERO -->
+  <div class="result-hero" style="margin-top:28px;">
+    <div class="result-pct" id="res-pct">—</div>
+    <div class="result-verdict" id="res-verdict">—</div>
+    <p class="result-sub" id="res-sub">—</p>
+    <div class="result-stats">
+      <div class="stat">
+        <span class="result-stat-val ok" id="res-correct">—</span>
+        <div class="result-stat-lbl">Correct</div>
+      </div>
+      <div class="stat">
+        <span class="result-stat-val ng" id="res-wrong">—</span>
+        <div class="result-stat-lbl">Incorrect</div>
+      </div>
+      <div class="stat">
+        <span class="result-stat-val" id="res-skip" style="color:var(--td)">—</span>
+        <div class="result-stat-lbl">Skipped</div>
+      </div>
+      <div class="stat">
+        <span class="result-stat-val neu" id="res-total">—</span>
+        <div class="result-stat-lbl">Total</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DOMAIN BREAKDOWN -->
+  <div class="section-label">Performance by Domain</div>
+  <div class="card" style="padding:0;overflow:hidden;margin-bottom:24px;">
+    <table class="domain-table"><thead><tr>
+      <th>Domain</th><th>Score</th><th>Result</th>
+    </tr></thead>
+    <tbody id="domain-results"></tbody>
+    </table>
+  </div>
+
+  <!-- REVIEW TOGGLE -->
+  <div class="result-actions">
+    <button class="btn btn-blue" onclick="toggleReview()">📋 Review Answers</button>
+    <button class="btn btn-amber" onclick="retrySession()">↺ Retry Same Set</button>
+    <button class="btn btn-ghost" onclick="showScreen('home')">⌂ New Session</button>
+  </div>
+
+  <div id="review-section" style="display:none;margin-top:24px;">
+    <div class="section-label mt-6">Answer Review</div>
+    <div id="review-list"></div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
+<script>
+/* ── CONSTANTS ─────────────────────────────────────── */
+const STORAGE_KEY  = "iec62443_qbank_v2";
+const DOMAINS_KEY  = "iec62443_domains_v2";
+const PASS_THRESHOLD = 70;
+
+const DEFAULT_DOMAINS = [
+  "ICS Fundamentals & Terminology",
+  "Security Zones & Conduits",
+  "Foundational Requirements (FRs)",
+  "Security Levels (SL 1–4)",
+  "Risk Assessment",
+  "CSMS & Policies (IEC 62443-2-1)",
+  "Patch & Vulnerability Management",
+  "Supply Chain Security (IEC 62443-2-4)",
+  "System Security (IEC 62443-3-3)",
+  "Product Security (IEC 62443-4-1/4-2)",
+  "Defense-in-Depth & Architecture",
+  "Incident Response"
+];
+
+/* ── STATE ──────────────────────────────────────────── */
+let S = {
+  mode: 'test',
+  selectedDomains: new Set(['__all__']),
+  session: { questions:[], answers:[], current:0, showAns:false, timerSec:0, timerInterval:null, totalSec:0 }
+};
+
+/* ── STORAGE ────────────────────────────────────────── */
+function loadQBank() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); } catch { return []; } }
+function saveQBank(qs) { localStorage.setItem(STORAGE_KEY, JSON.stringify(qs)); }
+function getQBank() { return loadQBank(); }
+function getDomains() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(DOMAINS_KEY));
+    return Array.isArray(stored) && stored.length > 0 ? stored : [...DEFAULT_DOMAINS];
+  } catch { return [...DEFAULT_DOMAINS]; }
+}
+function saveDomains(arr) { localStorage.setItem(DOMAINS_KEY, JSON.stringify(arr)); }
+
+/* ── HELPERS ────────────────────────────────────────── */
+function uid() { return 'q_' + Date.now() + '_' + Math.random().toString(36).slice(2,7); }
+function shuffle(arr) { const a=[...arr]; for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function toast(msg, dur=2400) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.querySelectorAll('.nav-pill').forEach((p,i) => { p.classList.toggle('active', ['home','manage'][i] === id); });
+  if (id === 'home') refreshHome();
+  if (id === 'manage') refreshManage();
+  window.scrollTo(0,0);
+}
+function fmtTime(s) { const m=Math.floor(s/60),ss=s%60; return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`; }
+
+/* ── HOME ───────────────────────────────────────────── */
+function selectMode(m) {
+  S.mode = m;
+  document.getElementById('card-test').className = 'mode-card' + (m==='test' ? ' selected-test' : '');
+  document.getElementById('card-practice').className = 'mode-card' + (m==='practice' ? ' selected-practice' : '');
+  document.getElementById('cfg-time').disabled = m === 'practice';
+  document.getElementById('cfg-time-note').textContent = m === 'practice' ? 'Disabled in Practice mode' : 'Active in Test mode only';
+}
+
+function refreshHome() {
+  const qs = getQBank();
+  const domains = getDomains();
+  document.getElementById('stat-bank').textContent = qs.length;
+  document.getElementById('stat-domains').textContent = domains.length;
+  const avail = computeAvail();
+  document.getElementById('cfg-avail').textContent = `of ${avail} available`;
+  buildDomainChips();
+}
+
+function computeAvail() {
+  const qs = getQBank();
+  if (S.selectedDomains.has('__all__')) return qs.length;
+  return qs.filter(q => S.selectedDomains.has(q.domain)).length;
+}
+
+function buildDomainChips() {
+  const qs = getQBank();
+  const domains = getDomains();
+  const counts = {};
+  domains.forEach(d => counts[d] = 0);
+  qs.forEach(q => { if (counts[q.domain] !== undefined) counts[q.domain]++; else counts[q.domain] = 1; });
+  const el = document.getElementById('domain-chips');
+  el.innerHTML = '';
+
+  // All chip
+  const allChip = document.createElement('button');
+  allChip.className = 'd-chip' + (S.selectedDomains.has('__all__') ? ' on' : '');
+  allChip.textContent = `All Domains (${qs.length})`;
+  allChip.onclick = () => { S.selectedDomains = new Set(['__all__']); buildDomainChips(); document.getElementById('cfg-avail').textContent = `of ${qs.length} available`; };
+  el.appendChild(allChip);
+
+  domains.forEach(d => {
+    if (!counts[d]) return;
+    const chip = document.createElement('button');
+    chip.className = 'd-chip' + (S.selectedDomains.has(d) && !S.selectedDomains.has('__all__') ? ' on' : '');
+    chip.textContent = `${d} (${counts[d]})`;
+    chip.onclick = () => {
+      S.selectedDomains.delete('__all__');
+      if (S.selectedDomains.has(d)) S.selectedDomains.delete(d);
+      else S.selectedDomains.add(d);
+      if (S.selectedDomains.size === 0) S.selectedDomains.add('__all__');
+      document.getElementById('cfg-avail').textContent = `of ${computeAvail()} available`;
+      buildDomainChips();
+    };
+    el.appendChild(chip);
+  });
+}
+
+/* ── START QUIZ ─────────────────────────────────────── */
+function startQuiz() {
+  const qs = getQBank();
+  let pool = S.selectedDomains.has('__all__') ? [...qs] : qs.filter(q => S.selectedDomains.has(q.domain));
+  if (pool.length === 0) { toast('⚠ No questions available for selected domains.'); return; }
+  if (document.getElementById('cfg-shuffle').checked) pool = shuffle(pool);
+  const qty = Math.min(parseInt(document.getElementById('cfg-qty').value) || 25, pool.length);
+  pool = pool.slice(0, qty);
+
+  const timeMins = parseInt(document.getElementById('cfg-time').value) || 60;
+  S.session = {
+    questions: pool,
+    answers: new Array(pool.length).fill(null),
+    current: 0,
+    showAns: false,
+    timerSec: S.mode === 'test' ? timeMins * 60 : 0,
+    totalSec: timeMins * 60,
+    timerInterval: null
+  };
+  showScreen('quiz');
+  renderQuestion();
+  if (S.mode === 'test') startTimer();
+}
+
+/* ── QUIZ ENGINE ─────────────────────────────────────── */
+function startTimer() {
+  const disp = document.getElementById('timer-display');
+  disp.style.display = 'block';
+  disp.className = 'timer-display';
+  updateTimerDisplay();
+  S.session.timerInterval = setInterval(() => {
+    S.session.timerSec--;
+    updateTimerDisplay();
+    if (S.session.timerSec <= 0) { clearInterval(S.session.timerInterval); autoSubmit(); }
+  }, 1000);
+}
+
+function updateTimerDisplay() {
+  const disp = document.getElementById('timer-display');
+  const pct = S.session.timerSec / S.session.totalSec;
+  disp.textContent = fmtTime(S.session.timerSec);
+  disp.className = 'timer-display' + (pct < 0.1 ? ' crit' : pct < 0.2 ? ' warn' : '');
+}
+
+function autoSubmit() { showResults(); }
+
+function renderQuestion() {
+  const sess = S.session;
+  const q = sess.questions[sess.current];
+  const isTest = S.mode === 'test';
+  const answered = sess.answers[sess.current] !== null;
+
+  // Header
+  document.getElementById('q-mode-tag').textContent = isTest ? 'TEST' : 'PRACTICE';
+  document.getElementById('q-mode-tag').className = 'quiz-mode-tag ' + (isTest ? 'test' : 'practice');
+  document.getElementById('q-counter').textContent = `Q ${sess.current + 1} / ${sess.questions.length}`;
+  document.getElementById('q-domain-label').textContent = q.domain;
+  document.getElementById('q-domain-badge').textContent = q.domain;
+  document.getElementById('q-text').textContent = q.question;
+  const pct = (sess.current / sess.questions.length * 100);
+  document.getElementById('q-progress-fill').style.width = pct + '%';
+
+  // Show answer toggle (practice only, before answered)
+  const showBtn = document.getElementById('show-ans-btn');
+  showBtn.style.display = !isTest && !answered ? 'block' : 'none';
+  showBtn.className = 'show-ans-toggle' + (sess.showAns ? ' revealed' : '');
+  showBtn.textContent = sess.showAns ? '🙈 Hide Answer' : '👁 Show Answer';
+
+  // Options
+  const optsEl = document.getElementById('q-opts');
+  const LABELS = ['A','B','C','D'];
+  optsEl.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'opt-btn';
+    btn.disabled = answered;
+
+    // Determine class
+    if (answered) {
+      const userAns = sess.answers[sess.current];
+      if (i === q.correct) btn.classList.add('correct-chosen');
+      else if (i === userAns) btn.classList.add('wrong-chosen');
+    } else if (sess.showAns && !isTest) {
+      if (i === q.correct) btn.classList.add('correct-show');
+    }
+
+    btn.innerHTML = `<span class="opt-key-badge">${LABELS[i]}</span><span>${esc(opt)}</span>`;
+    if (!answered) btn.onclick = () => selectAnswer(i);
+    optsEl.appendChild(btn);
+  });
+
+  // Feedback
+  renderFeedback(q, answered);
+
+  // Next button
+  const nb = document.getElementById('next-btn');
+  const isLast = sess.current === sess.questions.length - 1;
+  nb.textContent = isLast ? 'Finish ✓' : 'Next ›› ';
+  // In test mode require answer unless it's the last one with timer
+  nb.disabled = false;
+}
+
+function selectAnswer(idx) {
+  const sess = S.session;
+  if (sess.answers[sess.current] !== null) return;
+  sess.answers[sess.current] = idx;
+  sess.showAns = false;
+  renderQuestion();
+}
+
+function renderFeedback(q, answered) {
+  const fbEl = document.getElementById('q-feedback');
+  const isTest = S.mode === 'test';
+  const sess = S.session;
+
+  if (!answered) { fbEl.style.display = 'none'; fbEl.innerHTML = ''; return; }
+
+  const userAns = sess.answers[sess.current];
+  const correct = userAns === q.correct;
+  const LABELS = ['A','B','C','D'];
+  fbEl.style.display = 'flex';
+  fbEl.innerHTML = '';
+
+  if (isTest) {
+    // Test mode: minimal — just correct/wrong label
+    const panel = document.createElement('div');
+    panel.className = 'fb-panel ' + (correct ? 'fb-correct' : 'fb-wrong');
+    panel.innerHTML = `<div class="fb-head">${correct ? '✓ Correct' : '✗ Incorrect — Correct answer: ' + LABELS[q.correct]}</div>`;
+    fbEl.appendChild(panel);
+  } else {
+    // Practice mode: full justification
+    if (!correct) {
+      // Why chosen answer is wrong
+      const wrongPanel = document.createElement('div');
+      wrongPanel.className = 'fb-panel fb-wrong';
+      wrongPanel.innerHTML = `<div class="fb-head">✗ Why ${LABELS[userAns]} is incorrect</div><div class="fb-body">${esc(q.justifications[userAns])}</div>`;
+      fbEl.appendChild(wrongPanel);
+    }
+    // Why correct answer is right
+    const corrPanel = document.createElement('div');
+    corrPanel.className = 'fb-panel fb-correct';
+    corrPanel.innerHTML = `<div class="fb-head">✓ Why ${LABELS[q.correct]} is correct</div><div class="fb-body">${esc(q.justifications[q.correct])}</div>`;
+    fbEl.appendChild(corrPanel);
+  }
+}
+
+function toggleShowAnswer() {
+  S.session.showAns = !S.session.showAns;
+  renderQuestion();
+}
+
+function nextQuestion() {
+  const sess = S.session;
+  if (sess.current >= sess.questions.length - 1) {
+    clearInterval(sess.timerInterval);
+    showResults();
+  } else {
+    sess.current++;
+    sess.showAns = false;
+    renderQuestion();
+  }
+}
+
+function confirmExit() {
+  if (confirm('Exit the current quiz? Progress will be lost.')) {
+    clearInterval(S.session.timerInterval);
+    showScreen('home');
+  }
+}
+
+/* ── RESULTS ─────────────────────────────────────────── */
+function showResults() {
+  clearInterval(S.session.timerInterval);
+  showScreen('results');
+
+  const sess = S.session;
+  const qs = sess.questions;
+  let correct = 0, skipped = 0;
+  sess.answers.forEach((a, i) => {
+    if (a === null) skipped++;
+    else if (a === qs[i].correct) correct++;
+  });
+  const wrong = qs.length - correct - skipped;
+  const pct = Math.round(correct / qs.length * 100);
+  const pass = pct >= PASS_THRESHOLD;
+
+  document.getElementById('res-pct').textContent = pct + '%';
+  document.getElementById('res-pct').className = 'result-pct ' + (pass ? 'pass' : 'fail');
+  document.getElementById('res-verdict').textContent = pass ? 'PASS THRESHOLD MET' : 'ADDITIONAL STUDY NEEDED';
+  document.getElementById('res-verdict').className = 'result-verdict ' + (pass ? 'pass' : 'fail');
+  document.getElementById('res-sub').textContent = `${correct} of ${qs.length} correct · ${S.mode === 'test' ? 'Test Mode' : 'Practice Mode'} · 70% required to pass`;
+  document.getElementById('res-correct').textContent = correct;
+  document.getElementById('res-wrong').textContent = wrong;
+  document.getElementById('res-skip').textContent = skipped;
+  document.getElementById('res-total').textContent = qs.length;
+
+  // Domain breakdown
+  const dm = {};
+  qs.forEach((q, i) => {
+    if (!dm[q.domain]) dm[q.domain] = {correct:0,total:0};
+    dm[q.domain].total++;
+    if (sess.answers[i] === q.correct) dm[q.domain].correct++;
+  });
+  const tbody = document.getElementById('domain-results');
+  tbody.innerHTML = Object.entries(dm).sort((a,b)=>(a[1].correct/a[1].total)-(b[1].correct/b[1].total)).map(([d,v])=>{
+    const p = Math.round(v.correct/v.total*100);
+    const col = p>=70?'#4caf7d':p>=50?'#e8a44a':'#e05555';
+    const cls = p>=70?'pass':p>=50?'warn':'fail';
+    return `<tr>
+      <td style="color:var(--text);font-size:13px">${esc(d)}</td>
+      <td style="white-space:nowrap">
+        <div class="d-bar-wrap"><div class="d-bar-fill" style="width:${p}%;background:${col}"></div></div>
+        <span style="font-family:var(--mono);font-size:12px;color:var(--td)">${v.correct}/${v.total}</span>
+      </td>
+      <td><span class="d-pct ${cls}">${p}%</span></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('review-section').style.display = 'none';
+}
+
+function toggleReview() {
+  const sec = document.getElementById('review-section');
+  if (sec.style.display === 'none') {
+    sec.style.display = 'block';
+    buildReview();
+    sec.scrollIntoView({behavior:'smooth',block:'start'});
+  } else {
+    sec.style.display = 'none';
+  }
+}
+
+function buildReview() {
+  const sess = S.session;
+  const LABELS = ['A','B','C','D'];
+  const el = document.getElementById('review-list');
+  el.innerHTML = sess.questions.map((q,i)=>{
+    const ua = sess.answers[i];
+    const correct = ua === q.correct;
+    const skipped = ua === null;
+    const cls = skipped ? 'r-skip' : correct ? 'r-correct' : 'r-wrong';
+    const statusBadge = skipped ? '<span class="badge" style="background:var(--s3);border:1px solid var(--bd2);color:var(--td)">SKIPPED</span>'
+      : correct ? '<span class="badge badge-green">✓ CORRECT</span>'
+      : '<span class="badge badge-amber" style="background:var(--rdim);border-color:var(--red);color:var(--rt)">✗ WRONG</span>';
+    const opts = q.options.map((o,oi)=>{
+      let cls2='review-opt';
+      if(oi===q.correct) cls2+=' r-correct';
+      else if(oi===ua) cls2+=' r-wrong';
+      return `<div class="${cls2}">${LABELS[oi]}. ${esc(o)}</div>`;
+    }).join('');
+    return `<div class="review-item ${cls}">
+      <div class="review-q-num flex-between"><span>Q${i+1} · ${esc(q.domain)}</span>${statusBadge}</div>
+      <div class="review-q-text">${esc(q.question)}</div>
+      <div class="review-opts">${opts}</div>
+      <div style="margin-top:12px">
+        <div class="fb-panel fb-correct" style="font-size:13px">
+          <div class="fb-head">✓ Correct Answer — ${LABELS[q.correct]}</div>
+          <div class="fb-body">${esc(q.justifications[q.correct])}</div>
+        </div>
+        ${!correct && ua!==null ? `<div class="fb-panel fb-wrong" style="font-size:13px;margin-top:8px">
+          <div class="fb-head">✗ Your Answer — ${LABELS[ua]}</div>
+          <div class="fb-body">${esc(q.justifications[ua])}</div>
+        </div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function retrySession() {
+  S.session.answers = new Array(S.session.questions.length).fill(null);
+  S.session.current = 0;
+  S.session.showAns = false;
+  if (S.mode === 'test') {
+    S.session.timerSec = S.session.totalSec;
+    clearInterval(S.session.timerInterval);
+  }
+  showScreen('quiz');
+  renderQuestion();
+  if (S.mode === 'test') startTimer();
+}
+
+/* ── MANAGE SCREEN ───────────────────────────────────── */
+let formOpen = false;
+function toggleAddForm() {
+  formOpen = !formOpen;
+  document.getElementById('add-form-wrap').style.display = formOpen ? 'block' : 'none';
+  if (formOpen) { clearForm(); buildOptBlocks(); document.getElementById('add-form-wrap').scrollIntoView({behavior:'smooth'}); }
+}
+
+function buildOptBlocks() {
+  const LABELS=['A','B','C','D'];
+  const correct = parseInt(document.getElementById('f-correct').value);
+  const el = document.getElementById('opt-blocks');
+  el.innerHTML = LABELS.map((_,i)=>`
+    <div class="opt-block ${i===correct?'is-correct-opt':''}" id="opt-block-${i}">
+      <div class="opt-header">
+        <div class="opt-letter">${LABELS[i]}</div>
+        <div style="flex:1">
+          <input type="text" class="form-input" id="f-opt-${i}" placeholder="Option ${LABELS[i]} text..." style="margin-bottom:0">
+        </div>
+        <label class="radio-correct">
+          <input type="radio" name="correct-ans" value="${i}" ${i===correct?'checked':''} onchange="onCorrectChange(${i})"> Correct
+        </label>
+      </div>
+      <textarea class="form-textarea" id="f-just-${i}" placeholder="Justification: explain why this option is ${i===correct?'correct':'incorrect'}..." style="min-height:60px"></textarea>
+    </div>
+  `).join('');
+}
+
+function onCorrectChange(idx) {
+  document.getElementById('f-correct').value = idx;
+  const LABELS=['A','B','C','D'];
+  [0,1,2,3].forEach(i=>{
+    const blk=document.getElementById('opt-block-'+i);
+    blk.classList.toggle('is-correct-opt',i===idx);
+    const lbl=blk.querySelector('.opt-letter');
+    lbl.style.background=i===idx?'var(--green)':'';
+    lbl.style.color=i===idx?'#fff':'';
+    const just=document.getElementById('f-just-'+i);
+    just.placeholder=`Justification: explain why this option is ${i===idx?'correct':'incorrect'}...`;
+  });
+}
+
+function saveQuestion() {
+  const domain = document.getElementById('f-domain').value;
+  const question = document.getElementById('f-question').value.trim();
+  const correct = parseInt(document.getElementById('f-correct').value);
+  const options = [0,1,2,3].map(i=>document.getElementById('f-opt-'+i).value.trim());
+  const justifications = [0,1,2,3].map(i=>document.getElementById('f-just-'+i).value.trim());
+
+  if (!question) { toast('⚠ Question text is required.'); return; }
+  if (options.some(o=>!o)) { toast('⚠ All four option texts are required.'); return; }
+  if (justifications.some(j=>!j)) { toast('⚠ All four justifications are required.'); return; }
+
+  const qs = getQBank();
+  const editId = document.getElementById('edit-id').value;
+
+  if (editId) {
+    const idx = qs.findIndex(q=>q.id===editId);
+    if (idx>-1) { qs[idx]={...qs[idx],domain,question,options,correct,justifications}; }
+  } else {
+    qs.push({id:uid(),domain,question,options,correct,justifications});
+  }
+  saveQBank(qs);
+  toast('✓ Question saved.');
+  clearForm();
+  formOpen=false;
+  document.getElementById('add-form-wrap').style.display='none';
+  refreshManage();
+}
+
+function clearForm() {
+  document.getElementById('edit-id').value='';
+  document.getElementById('form-title').textContent='New Question';
+  document.getElementById('f-question').value='';
+  document.getElementById('f-correct').value='0';
+  if(document.getElementById('opt-block-0')) buildOptBlocks();
+  [0,1,2,3].forEach(i=>{ const o=document.getElementById('f-opt-'+i); const j=document.getElementById('f-just-'+i); if(o)o.value=''; if(j)j.value=''; });
+}
+
+function editQuestion(id) {
+  const qs = getQBank();
+  const q = qs.find(x=>x.id===id);
+  if(!q) return;
+  formOpen=true;
+  document.getElementById('add-form-wrap').style.display='block';
+  document.getElementById('form-title').textContent='Edit Question';
+  document.getElementById('edit-id').value=q.id;
+  document.getElementById('f-domain').value=q.domain;
+  document.getElementById('f-question').value=q.question;
+  document.getElementById('f-correct').value=q.correct;
+  buildOptBlocks();
+  [0,1,2,3].forEach(i=>{
+    document.getElementById('f-opt-'+i).value=q.options[i]||'';
+    document.getElementById('f-just-'+i).value=q.justifications[i]||'';
+  });
+  document.getElementById('add-form-wrap').scrollIntoView({behavior:'smooth'});
+}
+
+function deleteQuestion(id) {
+  if(!confirm('Delete this question?')) return;
+  const qs = getQBank().filter(q=>q.id!==id);
+  saveQBank(qs);
+  refreshManage();
+  toast('✓ Question deleted.');
+}
+
+function refreshManage() {
+  const qs = getQBank();
+  const domains = getDomains();
+  document.getElementById('manage-count').textContent = qs.length + ' questions';
+  document.getElementById('manage-dom-count').textContent = domains.length + ' domains';
+  // Populate domain selects
+  const fDom = document.getElementById('f-domain');
+  const filterDom = document.getElementById('q-filter-domain');
+  const curVal = fDom.value;
+  fDom.innerHTML = domains.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');
+  filterDom.innerHTML = '<option value="">All Domains</option>' + domains.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');
+  if(curVal) fDom.value=curVal;
+  renderQList();
+  renderDomainList();
+  if(document.getElementById('opt-block-0')) buildOptBlocks();
+}
+
+function renderQList() {
+  const qs = getQBank();
+  const search = (document.getElementById('q-search').value||'').toLowerCase();
+  const domFilter = document.getElementById('q-filter-domain').value;
+  const filtered = qs.filter(q=> {
+    const matchDom = !domFilter || q.domain===domFilter;
+    const matchSearch = !search || q.question.toLowerCase().includes(search) || q.domain.toLowerCase().includes(search);
+    return matchDom && matchSearch;
+  });
+  const el = document.getElementById('q-list');
+  if(filtered.length===0){el.innerHTML='<div class="no-q">No questions match your search.</div>';return;}
+  el.innerHTML = filtered.map((q,i)=>`
+    <div class="q-list-item">
+      <div class="q-list-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="q-list-body">
+        <div class="q-list-domain">${esc(q.domain)}</div>
+        <div class="q-list-text">${esc(q.question)}</div>
+      </div>
+      <div class="q-list-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editQuestion('${q.id}')">Edit</button>
+        <button class="btn btn-red btn-sm" onclick="deleteQuestion('${q.id}')">Del</button>
+      </div>
+    </div>`).join('');
+}
+
+/* ══════════════════════════════════════════════════════
+   DEMO DATA — 25 Questions
+══════════════════════════════════════════════════════ */
+const DEMO_QUESTIONS = [
+{domain:"ICS Fundamentals & Terminology",question:"What does IACS stand for in the context of IEC 62443?",options:["Industrial Asset Cybersecurity Standard","Industrial Automation and Control Systems","Integrated Access Control and Security","Industrial Application and Communication Suite"],correct:1,justifications:["Incorrect. 'Industrial Asset Cybersecurity Standard' is not an IEC 62443 term. While it sounds plausible, IACS specifically refers to the control systems themselves, not a standard.","Correct. IACS stands for Industrial Automation and Control Systems — the comprehensive term used throughout IEC 62443 for systems that monitor and control industrial processes, including PLCs, DCS, SCADA, and HMIs.","Incorrect. 'Integrated Access Control and Security' describes a function rather than a category of systems. IEC 62443 uses IACS to denote the physical and software systems controlling processes.","Incorrect. 'Industrial Application and Communication Suite' is not an IEC 62443 term. The standard defines IACS as automation and control systems, not an application or communication package."]},
+{domain:"ICS Fundamentals & Terminology",question:"In OT (Operational Technology) environments, the CIA security triad is typically prioritized in which order, compared to traditional IT?",options:["Confidentiality, Integrity, Availability (same as IT)","Availability, Integrity, Confidentiality","Integrity, Availability, Confidentiality","Confidentiality, Availability, Integrity"],correct:1,justifications:["Incorrect. In traditional IT, Confidentiality is prioritized first. OT environments invert this because an unavailable control system can cause physical harm, process shutdowns, or safety incidents — making availability the top priority.","Correct. OT environments prioritize Availability first (process must keep running), then Integrity (commands must not be corrupted), and finally Confidentiality. This inversion from IT is fundamental to understanding how IEC 62443 security controls must be designed and implemented.","Incorrect. While integrity is critical in OT (corrupted commands can be dangerous), availability typically ranks higher because a loss of control can create immediate safety hazards. Integrity comes second, not first.","Incorrect. Confidentiality is the lowest OT priority because exposing process data is generally less dangerous than losing control of the process. IT-centric thinking places confidentiality first, which is inappropriate for IACS environments."]},
+{domain:"ICS Fundamentals & Terminology",question:"Which IEC 62443 series document provides the master glossary of terms and abbreviations used across the entire standard?",options:["IEC 62443-1-1","IEC 62443-1-2","IEC 62443-2-1","IEC 62443-3-1"],correct:1,justifications:["Incorrect. IEC 62443-1-1 provides general concepts, terminology, and the reference model for the standard. While it defines key terms, it is not the master glossary document specifically dedicated to terms and abbreviations.","Correct. IEC 62443-1-2 is the master glossary of terms and abbreviations for the entire IEC 62443 series. It provides the authoritative definitions used consistently across all other parts of the standard.","Incorrect. IEC 62443-2-1 specifies requirements for establishing and operating a Cyber Security Management System (CSMS) for asset owners. It is a policy and process standard, not a glossary.","Incorrect. IEC 62443-3-1 is a technical report covering security technologies applicable to IACS environments. It provides technology guidance, not a glossary of terms."]},
+{domain:"ICS Fundamentals & Terminology",question:"A 'compensating countermeasure' in IEC 62443 is best described as:",options:["A control that exceeds the required security level","A temporary or permanent measure applied when a primary security requirement cannot be met","A financial payment to compensate for a security breach","A duplicate copy of the primary security control"],correct:1,justifications:["Incorrect. A countermeasure that exceeds the security level target (SL-T) results in a higher SL-A, which is acceptable but is not what 'compensating' specifically means in IEC 62443.","Correct. A compensating countermeasure is applied when a primary security requirement cannot be fully met — for example, a legacy PLC that cannot support authentication. Additional controls (stricter network isolation, enhanced monitoring) compensate for the gap, and the residual risk is formally documented and accepted.","Incorrect. Compensating countermeasures have nothing to do with financial compensation. They are technical or administrative security controls applied in lieu of primary requirements that cannot be implemented.","Incorrect. A duplicate security control is a redundant control for availability. A compensating countermeasure specifically addresses a gap where the primary requirement cannot be met, not a redundancy scenario."]},
+{domain:"Security Zones & Conduits",question:"According to IEC 62443-3-2, what is the PRIMARY criterion for grouping IACS assets into a Security Zone?",options:["Physical proximity of the assets within the plant","Assets sharing the same manufacturer or communication protocol","Assets sharing common security requirements and risk profile","Assets with the same hardware generation or age"],correct:2,justifications:["Incorrect. Physical proximity is a secondary consideration. Two physically adjacent assets may have very different security requirements and therefore belong in different zones. The zone model is driven by security need, not geography.","Incorrect. Shared manufacturer or protocol is not the defining criterion. Assets from different vendors using different protocols can share the same zone if they have the same security requirements and threat profile.","Correct. The fundamental criterion for zone membership is shared security requirements. Assets that require the same level of protection, face the same threats, and have the same consequence profile belong together. This allows a single security policy and SL-T to be applied consistently.","Incorrect. Hardware age or generation does not determine zone membership. Legacy and modern assets can coexist in the same zone if their security requirements align, though the legacy assets may require compensating countermeasures."]},
+{domain:"Security Zones & Conduits",question:"In the IEC 62443 Zone and Conduit model, what security level must a conduit achieve relative to the zones it connects?",options:["Lower than both zones to permit data flow without restriction","Equal to or greater than the highest SL of all zones it connects","Always SL 3, regardless of connected zone levels","Equal to the arithmetic average of the connected zone levels"],correct:1,justifications:["Incorrect. A conduit with a lower SL than the zones it connects would create a weak link — an attacker could traverse the conduit to reach a higher-security zone. The conduit is an enforcement boundary and must be at least as strong as the most secure zone it touches.","Correct. The conduit must achieve a security level equal to or greater than the highest SL of all connected zones. If the conduit is weaker than the zones it links, it becomes the path of least resistance for attackers trying to reach the more secure zone.","Incorrect. SL 3 is not a universal conduit requirement. The conduit level is determined by the zones it connects — if connecting two SL 1 zones, an SL 1 conduit suffices; if connecting an SL 2 and SL 3 zone, SL 3 is required.","Incorrect. Averaging security levels is not an IEC 62443 concept and would systematically under-protect higher-security zones by allowing weaker conduits to reach them."]},
+{domain:"Security Zones & Conduits",question:"What is the security function of a DMZ (Demilitarized Zone) in an IACS network architecture?",options:["To provide high-speed data exchange between IT and OT networks without any restrictions","To serve as a buffer zone enabling controlled data sharing without direct connections between IT and OT networks","To host the primary SCADA server for external access","To eliminate the need for firewalls between the enterprise and control zones"],correct:1,justifications:["Incorrect. A DMZ does not provide unrestricted data exchange — it does the opposite. It enforces controlled transfer of data, ensuring no direct pathways exist between different security zones.","Correct. A DMZ acts as a buffer between networks of different security levels (e.g., enterprise IT and OT control networks). Data passes to/from the DMZ rather than directly between zones. Services like historians and data relay servers are hosted in the DMZ, preventing direct exposure of the control network.","Incorrect. Hosting the primary SCADA server in a DMZ would expose it to both IT and control network traffic, increasing risk. Critical SCADA servers belong in the protected control zone, not the DMZ.","Incorrect. A DMZ complements firewalls — it does not replace them. Firewalls still control traffic between the enterprise, DMZ, and control zones. The DMZ is a network architecture pattern, not a replacement for boundary protection."]},
+{domain:"Foundational Requirements (FRs)",question:"Which of the seven Foundational Requirements (FRs) in IEC 62443 focuses specifically on restricting communications to authorized flows between zones and conduits?",options:["FR 2 – Use Control","FR 3 – System Integrity","FR 5 – Restricted Data Flow","FR 6 – Timely Response to Events"],correct:2,justifications:["Incorrect. FR 2 – Use Control focuses on enforcing privileges and access rights after a user or device has been authenticated. It governs what authenticated entities are permitted to do, not the communication pathways themselves.","Incorrect. FR 3 – System Integrity focuses on protecting IACS software, firmware, and data from unauthorized modification. It covers anti-malware, integrity checking, and secure boot — not inter-zone communication flows.","Correct. FR 5 – Restricted Data Flow specifically addresses controlling communication pathways within the IACS and between zones. Controls under FR 5 include firewalls, protocol filtering, and traffic whitelisting to ensure only authorized communications occur through defined conduits.","Incorrect. FR 6 – Timely Response to Events covers security event detection, audit logging, and incident response support. While it may detect unauthorized flows, the restriction and control of those flows is FR 5's domain."]},
+{domain:"Foundational Requirements (FRs)",question:"FR 7 — Resource Availability in IEC 62443 primarily addresses which security concern?",options:["Preventing unauthorized users from accessing IACS resources","Encrypting sensitive process data stored on IACS servers","Ensuring the IACS can perform its required functions and recover rapidly from disruptions or attacks","Logging all user access events for forensic investigation"],correct:2,justifications:["Incorrect. Preventing unauthorized access is covered by FR 1 (Identification and Authentication) and FR 2 (Use Control). FR 7 focuses on ensuring authorized processes continue to function, not on access restriction.","Incorrect. Encrypting stored data is a Data Confidentiality concern covered under FR 4. FR 7 addresses the ability to maintain operations, not the protection of data from disclosure.","Correct. FR 7 – Resource Availability ensures the IACS maintains required operational functions and can recover rapidly from failures, disruptions, or cyberattacks. Controls include redundancy, DoS protection, backup systems, and tested recovery procedures — directly reflecting OT's priority of availability.","Incorrect. Logging access events for forensic purposes is a Timely Response to Events concern, covered under FR 6. FR 7 is about maintaining and restoring operational availability, not about audit logging."]},
+{domain:"Foundational Requirements (FRs)",question:"An operator implements anti-malware software on all HMI workstations. Which Foundational Requirement does this MOST directly support?",options:["FR 1 – Identification and Authentication Control","FR 4 – Data Confidentiality","FR 3 – System Integrity","FR 6 – Timely Response to Events"],correct:2,justifications:["Incorrect. FR 1 governs the identification and authentication of users and devices before access is granted. Anti-malware protects the system after authentication has occurred and is unrelated to the authentication mechanism itself.","Incorrect. FR 4 – Data Confidentiality protects information from unauthorized disclosure. While malware can exfiltrate data, anti-malware's primary function is to prevent unauthorized modification or disruption of system integrity, not confidentiality.","Correct. FR 3 – System Integrity focuses on protecting IACS software, firmware, and data from unauthorized modification — which is precisely what malware is designed to cause. Anti-malware directly supports FR 3 by detecting and removing malicious code that could corrupt or disrupt IACS systems.","Incorrect. FR 6 – Timely Response to Events covers detection, logging, and response to security events. While anti-malware can detect incidents, its primary function is protective (preventing integrity compromise), making FR 3 the more direct match."]},
+{domain:"Security Levels (SL 1–4)",question:"Security Level 2 (SL 2) provides protection against which threat actor profile?",options:["Unintentional or accidental violations such as operator errors","Intentional attackers using simple, generic means without specialized IACS knowledge","Sophisticated attackers with IACS-specific skills and extended resources","Nation-state adversaries with virtually unlimited capabilities"],correct:1,justifications:["Incorrect. Protection against unintentional or accidental violations is the scope of SL 1. SL 2 begins to address intentional attackers — people who deliberately attempt to compromise the system, not those who do so accidentally.","Correct. SL 2 addresses intentional attacks using simple, generic means that require no special IACS knowledge — script kiddies, disgruntled employees with basic IT skills, or opportunistic hackers using commodity tools. It is the minimum level for systems facing any intentional threat.","Incorrect. Sophisticated attackers with IACS-specific knowledge and extended resources are the threat profile for SL 3. SL 2 attackers have generic skills and limited resources — they would not have the expertise to develop or use IACS-specific attack tools.","Incorrect. Nation-state adversaries with virtually unlimited resources are the threat profile for SL 4 — the highest level in IEC 62443. SL 2 is designed for much less sophisticated threats."]},
+{domain:"Security Levels (SL 1–4)",question:"What is the Security Level Capability (SL-C) of an IACS product?",options:["The SL assigned to the zone in which the product is deployed","The security level the product achieves after all compensating countermeasures are applied","The inherent security capabilities built into the product by the supplier, indicating the SL the product can support","The SL certified by the national cybersecurity authority for that product"],correct:2,justifications:["Incorrect. The SL assigned to a zone is the SL-T (Target), which is determined by the asset owner's risk assessment. SL-C is a property of the product itself, independent of any zone assignment.","Incorrect. The security level achieved after deploying all countermeasures in a zone is the SL-A (Achieved). SL-C is the product's inherent capability as designed and built, before any additional system-level controls are applied.","Correct. SL-C describes the inherent security capabilities designed and built into an IACS product by its supplier, indicating what Security Level the product can contribute to achieving. Suppliers publish SL-C claims so integrators and asset owners can select components appropriate for their zone's SL-T.","Incorrect. SL-C is determined and claimed by the product supplier based on the security features built into the product, not assigned by a government authority. National authorities may certify products, but the SL-C claim originates with the supplier."]},
+{domain:"Risk Assessment",question:"In IEC 62443-3-2 risk assessment, 'risk' is defined as a function of which two primary dimensions?",options:["Asset value and replacement cost","Number of known vulnerabilities and attacker skill level","Likelihood of a threat event and severity of the resulting consequences","Cost of countermeasures and probability of audit findings"],correct:2,justifications:["Incorrect. Asset value and replacement cost are financial metrics used in business impact analysis or insurance contexts, not the primary risk dimensions in IEC 62443-3-2. The standard focuses on harm potential, not replacement cost.","Incorrect. While vulnerability count and attacker skill contribute to likelihood assessment, they are inputs to the likelihood dimension — not the two primary risk dimensions themselves. The core formula combines likelihood with consequence.","Correct. IEC 62443-3-2 defines risk as the combination of the likelihood that a threat will exploit a vulnerability and the severity of the consequences if that incident occurs. These two dimensions determine the risk level and directly drive the Security Level Target for each zone and conduit.","Incorrect. Countermeasure cost and audit probability are not risk dimensions in IEC 62443-3-2. These are business and compliance considerations. Risk in the standard is assessed in terms of operational, safety, environmental, and financial harm."]},
+{domain:"Risk Assessment",question:"What is 'residual risk' in the context of an IACS cybersecurity program?",options:["The risk created by installing security controls that interfere with operations","The total risk present before any security measures are applied","The risk that remains after all planned countermeasures have been implemented","The risk exclusively associated with legacy systems that cannot be patched"],correct:2,justifications:["Incorrect. Risk created by security controls is sometimes called 'introduced risk' or 'control impact' — not residual risk. Some security controls do introduce operational risk, but this is not what residual risk means in IEC 62443.","Incorrect. Total risk before any security measures are applied is often called 'inherent risk' — the baseline before countermeasures. Residual risk is what remains after controls have been applied, not the starting point.","Correct. Residual risk is the risk that remains after all planned countermeasures have been implemented. No security control eliminates 100% of risk. Residual risk must be formally assessed, documented, and formally accepted by senior management as being at an acceptable level.","Incorrect. Residual risk applies to all IACS assets, not exclusively to legacy systems. While legacy systems may contribute significantly to residual risk (due to limited patching options), the concept applies to the entire risk landscape after all controls are in place."]},
+{domain:"CSMS & Policies (IEC 62443-2-1)",question:"What is a Cyber Security Management System (CSMS) as defined in IEC 62443-2-1?",options:["A software platform used to monitor IACS network traffic for intrusions","A set of antivirus and firewall products deployed throughout the IACS","A framework of policies, processes, procedures, and resources used to manage cybersecurity risks to an IACS","A government-mandated compliance checklist for industrial operators"],correct:2,justifications:["Incorrect. A network monitoring platform is a technical security tool — one component that might exist within a CSMS. The CSMS is the broader management framework that governs all security activities, including the decision to deploy monitoring tools.","Incorrect. Antivirus and firewall products are technical security controls that a CSMS may require to be deployed. The CSMS itself is the organizational and management framework — policies, processes, and responsibilities — not the technical tools.","Correct. The CSMS is the overall management framework encompassing policies, processes, procedures, organizational roles, and resources that an asset owner uses to systematically manage cybersecurity risks to their IACS. It is the OT equivalent of an ISMS (Information Security Management System).","Incorrect. A CSMS is not a government checklist — it is an organization-specific management system tailored to the asset owner's IACS risks. While regulatory requirements may mandate having a CSMS, they do not define its specific content; IEC 62443-2-1 does."]},
+{domain:"CSMS & Policies (IEC 62443-2-1)",question:"Under IEC 62443-2-1, who must approve and be ultimately accountable for the IACS Cybersecurity Policy?",options:["The lead cybersecurity engineer or CISO","The control system vendor","Senior management of the asset owner organization","The national cybersecurity regulatory authority"],correct:2,justifications:["Incorrect. The cybersecurity engineer or CISO may draft and maintain the policy, but accountability rests with senior management. Without executive ownership, the policy lacks organizational authority, resources, and enforcement capability.","Incorrect. The control system vendor provides products and services; they do not set the asset owner's organizational security policy. Vendor influence over the policy would represent a conflict of interest and violate the asset owner's responsibility.","Correct. IEC 62443-2-1 requires the Cybersecurity Policy to be approved and owned by senior management of the asset owner. Cybersecurity is a business risk management issue. Management commitment is required to ensure adequate resources, enforcement authority, and organizational accountability.","Incorrect. Regulatory authorities may mandate that a policy exists and review it during audits, but they do not approve or own the internal policy. The accountability sits with the asset owner's leadership, not external bodies."]},
+{domain:"CSMS & Policies (IEC 62443-2-1)",question:"A change management process for IACS under IEC 62443-2-1 must include which security-critical step?",options:["Automatic application of all vendor-recommended changes without delay","Security impact assessment before any change is implemented, with testing in a representative environment where possible","Delegating all change decisions to the control system vendor's engineers","Implementing changes only during business hours to minimize risk"],correct:1,justifications:["Incorrect. Automatic application of changes without review is extremely dangerous in IACS. A change that appears beneficial (e.g., a software update) could degrade security controls, affect process stability, or introduce new vulnerabilities. Every change requires deliberate review.","Correct. Every change to an IACS must undergo a security impact assessment before implementation. Changes can inadvertently degrade security controls, affect safety functions, or introduce vulnerabilities. Where possible, changes should be tested in a representative non-production environment before deployment to the live system.","Incorrect. Change decisions must remain under the asset owner's control. While vendor input is valuable, delegating authority to the vendor removes the asset owner's oversight — particularly dangerous since vendors have a commercial interest in having changes accepted quickly.","Incorrect. Limiting changes to business hours is an operational consideration, not a security requirement. The security requirement is the impact assessment and testing process, which applies regardless of when the change occurs."]},
+{domain:"Patch & Vulnerability Management",question:"According to IEC 62443-2-3, before deploying a security patch on a production IACS, the BEST practice is:",options:["Apply immediately because an unpatched system is always more dangerous than the risk of a disruptive patch","Test the patch in a representative non-production environment first, then deploy during a planned maintenance window with rollback capability","Apply patches only to Windows-based systems, as PLC firmware never requires patching","Wait for the control system vendor to force the update automatically"],correct:1,justifications:["Incorrect. Applying patches immediately without testing in IACS is dangerous. A patch that works correctly in an IT environment may crash a control application, cause a PLC restart, or introduce timing issues in real-time control loops — creating the very availability incident the patch was meant to prevent.","Correct. IEC 62443-2-3 requires testing patches in a representative non-production environment before deployment. This validates that the patch does not break process functionality. Deployment should occur during a planned maintenance window with a tested rollback plan and operational team coordination.","Incorrect. PLC firmware updates are security-critical and are explicitly addressed in IEC 62443-2-3. Firmware vulnerabilities are a significant IACS threat vector. Firmware updates require the same — or greater — rigor as software patches due to the risk of corrupting critical controller behavior.","Incorrect. Automatic vendor-forced updates are inappropriate in IACS. Asset owners must retain control over what changes are applied and when, following their change management and patch management processes. Automatic updates bypass impact assessment, testing, and maintenance window scheduling."]},
+{domain:"Patch & Vulnerability Management",question:"What is 'virtual patching' in the context of IACS vulnerability management?",options:["Applying patches to virtual machines without affecting physical controllers","Deploying controls at the network or application layer to block exploitation of a vulnerability without modifying the vulnerable system itself","Installing patches remotely via a VPN connection to avoid physical access","Simulating patch deployment in a test environment before production"],correct:1,justifications:["Incorrect. Patching virtual machines is a standard IT activity. Virtual patching is a conceptually different technique that does not require modifying the vulnerable system at all — neither physical nor virtual.","Correct. Virtual patching applies protection at the network level (e.g., IDS/IPS rules, firewall ACLs, deep packet inspection) to block exploitation of a known vulnerability without touching the vulnerable endpoint. This provides temporary risk reduction until the actual patch can be tested and deployed during a maintenance window.","Incorrect. Remote patch installation via VPN is simply remote patch deployment — a delivery mechanism. This modifies the vulnerable system directly and is not 'virtual patching' in the IEC 62443 or cybersecurity industry sense.","Incorrect. Test environment simulation is a validation step in patch management — it verifies the patch works correctly. Virtual patching is a mitigation technique that operates in production, not a simulation activity."]},
+{domain:"Supply Chain Security (IEC 62443-2-4)",question:"IEC 62443-2-4 specifies security requirements for which stakeholder?",options:["Asset owners who operate IACS plants","Product suppliers who develop PLCs and other IACS components","IACS service providers — system integrators and solution providers","Government agencies that regulate industrial cybersecurity"],correct:2,justifications:["Incorrect. Asset owner requirements are primarily governed by IEC 62443-2-1 (CSMS requirements) and IEC 62443-3-2 (risk assessment). IEC 62443-2-4 addresses the capabilities that service providers must demonstrate when working on behalf of asset owners.","Incorrect. Product supplier requirements are governed by IEC 62443-4-1 (Secure Development Lifecycle) and IEC 62443-4-2 (component security requirements). IEC 62443-2-4 covers the service delivery security capabilities of those who design, install, and maintain systems using those products.","Correct. IEC 62443-2-4 specifies security capabilities that IACS service providers (system integrators, solution providers, maintenance service providers) must have and demonstrate when delivering IACS services — designing, installing, commissioning, or maintaining IACS on behalf of asset owners.","Incorrect. IEC 62443 is a technical standard developed by ISA and IEC for industry use. It is not directed at government agencies. Regulatory bodies may reference IEC 62443, but the standard's requirements apply to industry stakeholders."]},
+{domain:"Supply Chain Security (IEC 62443-2-4)",question:"What is a Software Bill of Materials (SBOM) and why is it important in IACS supply chain security?",options:["A procurement document listing all software licenses and their costs","A comprehensive inventory of all software components, libraries, and versions in a product — enabling rapid identification of affected components when a vulnerability is disclosed","A certification document proving software is free from vulnerabilities","A vendor pricing list for IACS software maintenance contracts"],correct:1,justifications:["Incorrect. An SBOM is not a procurement or licensing document. It is a technical inventory of what software components are inside a product, not what was purchased or what licenses cost.","Correct. An SBOM is a detailed inventory of all software components (including open-source libraries, third-party components, and their specific versions) that make up a product. In IACS, SBOMs allow asset owners to quickly determine whether their systems contain a vulnerable component when a new vulnerability (like Log4Shell) is disclosed — enabling faster, more accurate risk assessment.","Incorrect. No document can certify software is free from vulnerabilities — this is not achievable. An SBOM identifies what components are present so that vulnerability disclosures can be quickly matched to installed components. It supports risk management, not a guarantee of security.","Incorrect. An SBOM is a technical composition document, not a commercial pricing document. Its purpose is software transparency and vulnerability management, not financial negotiation."]},
+{domain:"System Security (IEC 62443-3-3)",question:"What does IEC 62443-3-3 primarily specify?",options:["Secure development lifecycle requirements for IACS product suppliers","Risk assessment methodology for determining Security Level Targets","System-level security requirements organized under the seven FRs, scaled by Security Level","Component-level security capabilities for embedded devices and software applications"],correct:2,justifications:["Incorrect. Secure Development Lifecycle (SDL) requirements for product suppliers are specified in IEC 62443-4-1. IEC 62443-3-3 applies to IACS systems as deployed and operational, not to the product development process.","Incorrect. Risk assessment methodology for determining Security Level Targets is covered in IEC 62443-3-2. IEC 62443-3-3 specifies what security capabilities the system must have once the SL-T has been established.","Correct. IEC 62443-3-3 defines system-level security requirements (SRs) for IACS, organized under the seven Foundational Requirements and escalated across Security Levels 1–4 using Requirement Enhancements. It applies to the IACS as a system or to a security zone.","Incorrect. Component-level security capabilities (for embedded devices, network components, host devices, and software applications) are specified in IEC 62443-4-2. IEC 62443-3-3 applies at the system level, above the individual component level."]},
+{domain:"System Security (IEC 62443-3-3)",question:"SR 7.6 in IEC 62443-3-3 requires 'Network and Security Configuration Settings.' What does this mean in practice?",options:["Configuring the network for maximum throughput and data transfer speed","Maintaining a documented, hardened configuration baseline — removing default credentials, disabling unused services, and closing unnecessary ports on all network components","Allowing default vendor configurations to ensure maximum compatibility","Enabling all available features on network devices to support future operational needs"],correct:1,justifications:["Incorrect. Network throughput optimization is a performance engineering concern, not a security requirement. SR 7.6 is specifically about security hardening — minimizing the attack surface of network and security components.","Correct. SR 7.6 requires maintaining a documented, security-hardened configuration for network and security components: changing default credentials, disabling all unused services and ports, removing unnecessary features, and documenting the approved baseline. Vendor defaults are designed for interoperability, not security, and must be explicitly hardened.","Incorrect. Default vendor configurations typically include unused services, default credentials, and open ports that exist for convenience during setup. Leaving these active significantly expands the attack surface and is explicitly contradicted by SR 7.6.","Incorrect. Enabling all available features is the opposite of the least-functionality principle required by IEC 62443. Every unused enabled feature is a potential vulnerability. SR 7.6 requires enabling only what is required for the system's operational role."]},
+{domain:"Product Security (IEC 62443-4-1/4-2)",question:"IEC 62443-4-1 requires IACS product suppliers to implement a Secure Development Lifecycle (SDL). What is the primary purpose of this requirement?",options:["To ensure products are developed faster and with lower cost by standardizing processes","To integrate security requirements, threat modeling, and secure practices throughout the entire development process — reducing vulnerabilities in shipped products","To provide legal protection for suppliers against product liability claims","To guarantee that all products are free from vulnerabilities at the time of release"],correct:1,justifications:["Incorrect. The SDL does not primarily aim to reduce cost or accelerate development — it may actually add time and cost to some phases. Its purpose is security quality, achieved by building security in from the start rather than adding it retrospectively.","Correct. IEC 62443-4-1's SDL requirement exists to embed security at every development phase: requirements, architecture, design, coding, testing, and maintenance. This reduces the number and severity of vulnerabilities in shipped products, minimizing the patching burden on asset owners and building inherently more trustworthy IACS components.","Incorrect. While documentation from an SDL may have some legal relevance, legal protection is not its purpose. IEC 62443-4-1 requires SDL to improve security outcomes, not to manage legal liability.","Incorrect. No development process can guarantee zero vulnerabilities in shipped products. The SDL significantly reduces vulnerabilities but cannot eliminate them entirely. Post-release vulnerability management (also required by IEC 62443-4-1) handles vulnerabilities discovered after shipping."]},
+{domain:"Defense-in-Depth & Architecture",question:"Defense-in-Depth in an IACS security architecture means:",options:["Deploying the most advanced firewall available at the network perimeter","Applying multiple, independent, overlapping layers of security controls so that failure of any single control does not result in complete compromise","Encrypting all communications within and between IACS zones","Assigning the maximum Security Level to every zone to ensure maximum protection"],correct:1,justifications:["Incorrect. A single advanced perimeter firewall — no matter how sophisticated — is a single point of failure. If it is bypassed or misconfigured, the entire system is exposed. Defense-in-Depth requires multiple layers beyond the perimeter.","Correct. Defense-in-Depth applies multiple, independent layers of security so that an attacker must defeat several different controls to reach a target. If one layer fails (e.g., a phishing email bypasses email filtering), subsequent layers (network segmentation, application controls, endpoint protection, monitoring) still impede the attack.","Incorrect. Encryption is one security control — a single layer. Encrypting all communications is a valuable control but represents only one layer of defense. Relying solely on encryption ignores physical access, authentication weaknesses, insider threats, and other attack vectors.","Incorrect. Assigning SL 4 to all zones would be technically and economically impractical, and would impose unnecessarily burdensome controls on low-risk zones. Defense-in-Depth is about layered controls matched to risk, not about maximizing the SL of every zone."]},
+{domain:"Incident Response",question:"What is the PRIMARY goal of the 'Containment' phase in an IACS cybersecurity incident response?",options:["To immediately identify and prosecute the perpetrators of the attack","To restore all IACS systems to full operational status as quickly as possible","To prevent the incident from spreading to additional systems or zones while preserving forensic evidence","To notify all regulatory authorities and public stakeholders of the incident"],correct:2,justifications:["Incorrect. Identifying perpetrators is a forensic and law enforcement objective that may occur during or after the incident. Containment's immediate focus is stopping the spread of damage — attribution investigation comes later and must not delay containment actions.","Incorrect. Restoration to full operations is the goal of the Recovery phase — which comes after Containment and Eradication. Rushing to restore systems during containment can reintroduce the threat and destroy forensic evidence needed to understand the attack.","Correct. Containment's primary goal is to stop the incident from spreading to additional systems, zones, or conduits, thereby limiting impact while preserving the ability to investigate. In IACS, containment must be carefully balanced against safety — isolating a PLC must not create a process safety hazard.","Incorrect. Regulatory notification may be required but is a communication action, not the primary goal of containment. Regulatory notification timelines are typically defined (e.g., 72 hours) and occur in parallel with technical response, not as the primary containment objective."]},
+{domain:"Incident Response",question:"Why is the 'Lessons Learned' phase considered a critical component of IACS incident response under IEC 62443?",options:["It satisfies audit documentation requirements from regulatory authorities","It is used to assign blame and take disciplinary action against responsible personnel","It enables the organization to identify root causes, improve the CSMS, and prevent recurrence of similar incidents","It allows the organization to calculate financial losses for insurance claims"],correct:2,justifications:["Incorrect. While lessons learned documentation may satisfy some audit requirements, this is a secondary benefit. The primary purpose is operational improvement — regulatory compliance is an outcome, not the intent.","Incorrect. Incident response is not primarily a blame assignment exercise. A punitive focus discourages honest reporting and root cause analysis. IEC 62443 promotes a culture of security improvement, not punishment.","Correct. The Lessons Learned phase drives continuous improvement: identifying what failed (which vulnerability, process gap, or detection failure enabled the attack), what response actions worked, what needs improvement, and updating the CSMS accordingly. Organizations that skip this step tend to experience the same incidents repeatedly.","Incorrect. Financial loss calculation is an insurance and business impact assessment activity. While it may occur after an incident, it is not the IEC 62443 purpose of the Lessons Learned phase, which is focused on security improvement and CSMS enhancement."]}
+];
+
+/* ── MANAGE TABS ─────────────────────────────────────── */
+function switchManageTab(tab) {
+  ['questions','domains'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('panel-'+t).classList.toggle('active', t===tab);
+  });
+}
+
+/* ── DOMAIN MANAGEMENT ───────────────────────────────── */
+function addDomain() {
+  const input = document.getElementById('new-domain-input');
+  const name = input.value.trim();
+  if (!name) { toast('⚠ Please enter a domain name.'); return; }
+  const domains = getDomains();
+  if (domains.some(d => d.toLowerCase() === name.toLowerCase())) {
+    toast('⚠ A domain with that name already exists.'); return;
+  }
+  domains.push(name);
+  saveDomains(domains);
+  input.value = '';
+  toast('✓ Domain added.');
+  refreshManage();
+}
+
+function renderDomainList() {
+  const domains = getDomains();
+  const qs = getQBank();
+  // Count questions per domain
+  const counts = {};
+  domains.forEach(d => counts[d] = 0);
+  qs.forEach(q => { if (counts[q.domain] !== undefined) counts[q.domain]++; else counts[q.domain] = 1; });
+
+  const el = document.getElementById('domain-list');
+  if (!el) return;
+  if (domains.length === 0) {
+    el.innerHTML = '<div class="no-q">No domains defined. Add one above.</div>';
+    return;
+  }
+
+  el.innerHTML = domains.map((d, i) => {
+    const qc = counts[d] || 0;
+    const hasQ = qc > 0;
+    return `<div class="dom-item" id="dom-row-${i}">
+      <div class="dom-item-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="dom-item-name" id="dom-name-${i}">${esc(d)}</div>
+      <span class="dom-item-count ${hasQ?'has-q':'no-q-badge'}">${qc} Q</span>
+      <div class="dom-item-actions">
+        <button class="dom-order-btn" title="Move up" onclick="moveDomain(${i},-1)" ${i===0?'disabled style="opacity:.3"':''}>↑</button>
+        <button class="dom-order-btn" title="Move down" onclick="moveDomain(${i},1)" ${i===domains.length-1?'disabled style="opacity:.3"':''}>↓</button>
+        <button class="btn btn-ghost btn-sm" onclick="editDomainStart(${i})">Edit</button>
+        <button class="btn btn-red btn-sm" onclick="deleteDomain(${i})" ${hasQ?'title="Reassign questions first" style="opacity:.4" disabled':''}>Del</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editDomainStart(idx) {
+  const domains = getDomains();
+  const row = document.getElementById('dom-row-' + idx);
+  if (!row) return;
+  const nameEl = document.getElementById('dom-name-' + idx);
+  const oldName = domains[idx];
+  // Replace name + actions with edit controls inline
+  nameEl.innerHTML = `<div class="dom-edit-wrap">
+    <input type="text" class="form-input" id="dom-edit-input-${idx}" value="${esc(oldName)}" maxlength="120"
+      onkeydown="if(event.key==='Enter')saveDomainEdit(${idx});if(event.key==='Escape')renderDomainList();"
+      style="font-size:14px;padding:7px 11px;">
+  </div>`;
+  // Replace action buttons with save/cancel
+  row.querySelector('.dom-item-actions').innerHTML = `
+    <button class="btn btn-green btn-sm" onclick="saveDomainEdit(${idx})">💾 Save</button>
+    <button class="btn btn-ghost btn-sm" onclick="renderDomainList()">Cancel</button>`;
+  // Remove order buttons and count from view during edit
+  const countEl = row.querySelector('.dom-item-count');
+  if (countEl) countEl.style.display = 'none';
+  row.querySelectorAll('.dom-order-btn').forEach(b => b.style.display = 'none');
+  document.getElementById('dom-edit-input-' + idx).focus();
+  document.getElementById('dom-edit-input-' + idx).select();
+}
+
+function saveDomainEdit(idx) {
+  const input = document.getElementById('dom-edit-input-' + idx);
+  if (!input) return;
+  const newName = input.value.trim();
+  if (!newName) { toast('⚠ Domain name cannot be empty.'); return; }
+  const domains = getDomains();
+  const oldName = domains[idx];
+  if (newName === oldName) { renderDomainList(); return; }
+  if (domains.some((d, i) => i !== idx && d.toLowerCase() === newName.toLowerCase())) {
+    toast('⚠ Another domain with that name already exists.'); return;
+  }
+  // Update all questions that reference the old domain name
+  const qs = getQBank();
+  let updated = 0;
+  qs.forEach(q => { if (q.domain === oldName) { q.domain = newName; updated++; } });
+  saveQBank(qs);
+  domains[idx] = newName;
+  saveDomains(domains);
+  toast(`✓ Domain renamed. ${updated} question${updated!==1?'s':''} updated.`);
+  refreshManage();
+}
+
+function deleteDomain(idx) {
+  const domains = getDomains();
+  const name = domains[idx];
+  const qs = getQBank();
+  const inUse = qs.some(q => q.domain === name);
+  if (inUse) { toast('⚠ Reassign or delete all questions in this domain first.'); return; }
+  if (!confirm(`Delete domain "${name}"? This cannot be undone.`)) return;
+  domains.splice(idx, 1);
+  saveDomains(domains);
+  toast('✓ Domain deleted.');
+  refreshManage();
+}
+
+function moveDomain(idx, dir) {
+  const domains = getDomains();
+  const target = idx + dir;
+  if (target < 0 || target >= domains.length) return;
+  [domains[idx], domains[target]] = [domains[target], domains[idx]];
+  saveDomains(domains);
+  renderDomainList();
+  refreshManage();
+}
+
+/* ── INITIALIZATION ──────────────────────────────────── */
+function init() {
+  // Seed domains if not yet stored
+  if (!localStorage.getItem(DOMAINS_KEY)) {
+    saveDomains([...DEFAULT_DOMAINS]);
+  }
+  // Seed demo questions if bank is empty
+  const existing = getQBank();
+  if (existing.length === 0) {
+    saveQBank(DEMO_QUESTIONS.map((q,i) => ({...q, id: 'demo_'+i})));
+  }
+  // Build domain selects
+  const domains = getDomains();
+  const fDom = document.getElementById('f-domain');
+  fDom.innerHTML = domains.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');
+  const filterDom = document.getElementById('q-filter-domain');
+  filterDom.innerHTML = '<option value="">All Domains</option>' + domains.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');
+  // Build opt blocks initially
+  buildOptBlocks();
+  // Wire f-correct change
+  document.getElementById('f-correct').addEventListener('change', () => buildOptBlocks());
+  // Refresh home
+  refreshHome();
+}
+
+init();
+</script>
+</body>
+</html>
