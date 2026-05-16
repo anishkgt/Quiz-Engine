@@ -14,4 +14,4 @@ The interface is simple,
 
 Enjoy ! Happy learning.
 
-/assets/Domains.png
+[Domains](https://github.com/anishkgt/Quiz-Engine/blob/main/Domains.png?raw=true)
