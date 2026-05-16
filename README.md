@@ -13,5 +13,3 @@ The interface is simple,
   7. Start Quiz
 
 Enjoy ! Happy learning.
-
-[Domains](https://github.com/anishkgt/Quiz-Engine/blob/main/Domains.png?raw=true)
