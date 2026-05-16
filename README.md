@@ -14,4 +14,4 @@ The interface is simple,
 
 Enjoy ! Happy learning.
 
-![image alt](https://github.com/anishkgt/Quiz-Engine/blob/main/Domains.png?raw=true)
+![image alt](https://github.com/anishkgt/Quiz-Engine/blob/main/Quiz%20Engine.html)
